@@ -3,6 +3,7 @@
 
 #include <wiringPi.h>
 #include <iostream>
+#include <boost/chrono/chrono.hpp>
 #include "../lora_gateway.hpp"
 #include "../../libloragw/cpp_hal_adapter.h"
 

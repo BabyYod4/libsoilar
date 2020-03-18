@@ -138,15 +138,16 @@ void iC880a::start(){
 
 
 bool iC880a::read(){
+    bool result = false;
     _rxBuffMutex.lock();
-    claimBuffer(
+    result = claimBuffer(
 
         [this](std::array< LoraPackage, 8 >& buff)->bool{
             int pktLen;
             uint8_t buffPointer = 0;
 
             uint8_t sessionDevNum = getSessionDeviceGroupWaitNum();
-            uint16_t sessionTimeoutVal = getSessionDeviceGroupTimeout();
+            int sessionTimeoutVal = getSessionDeviceGroupTimeout();
             uint16_t foundDevices[sessionDevNum] = {0};
 
             uint8_t devId_msb;
@@ -155,15 +156,27 @@ bool iC880a::read(){
     
             bool allDevFound = false;
             bool timeout = false;
+
+            boost::chrono::steady_clock::time_point endTime;
+            boost::chrono::steady_clock::time_point startTime;
             
             std::function<bool(uint16_t)> isAlreadyfound = [&sessionDevNum, &foundDevices](uint16_t _devID)->bool{ 
-                for (uint8_t i=0; i<sessionDevNum; i++){
-                    if (_devID == foundDevices[i]){ return true; }
-                }
+                for (uint8_t i=0; i<sessionDevNum; i++){ if (_devID == foundDevices[i]){ return true; } }
                 return false;
             };
 
-            while ( !allDevFound ){
+            std::function<bool( int, boost::chrono::steady_clock::time_point&, boost::chrono::steady_clock::time_point&) > withinTimeout = []( 
+                int timeoutMS, 
+                boost::chrono::steady_clock::time_point & start, 
+                boost::chrono::steady_clock::time_point & end 
+            )->bool {
+                auto time_elapsed = boost::chrono::duration_cast<boost::chrono::milliseconds>(end - start).count();
+                return ( time_elapsed < timeoutMS );
+            };
+
+            startTime = boost::chrono::steady_clock::now();
+
+            while ( !allDevFound && !timeout ){
                 pktLen = _lgw_receive(8, _rxBuff);
                 
                 if (pktLen > 0){
@@ -187,16 +200,19 @@ bool iC880a::read(){
                     }
                 }
 
+                endTime = boost::chrono::steady_clock::now();
+
                 if ( buffPointer >= sessionDevNum ){ allDevFound = true; }
+                if ( !withinTimeout(sessionTimeoutVal, startTime, endTime) ){ timeout = true; }
 
             }
-
+            if (timeout){ return false; }
             return allDevFound;
         }
     );
 
     _rxBuffMutex.unlock();
-    return true;
+    return result;
 }
 
 

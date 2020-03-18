@@ -18,7 +18,10 @@ enum class LoraGatewayModes{
     RX_MODE    
 };
 
-typedef std::vector< std::array<uint16_t, 9> > LoraGatewayDeviceGroups; // 0 = GroupSessionTimeoutID -- 1-8 = devId's,
+
+typedef struct LoraGatewayDeviceGroup{ std::array<uint16_t, 8> idList; int timeoutMS; } LoraGatewayDeviceGroup;
+
+typedef std::vector< LoraGatewayDeviceGroup > LoraGatewayDeviceGroups; 
 
 typedef struct GatewayChannelData{ uint8_t channelID; int32_t offsetFreq; uint8_t radioNum; } GatewayChannelData;
 
@@ -92,8 +95,8 @@ protected:
     bool isValidDevice( uint16_t deviceID ){
         bool result = false;
         deviceGroupsMutex.lock();
-        for(uint8_t i=1; i<9; i++){
-            if ( deviceID == deviceGroups[sessionDeviceGroup][i] ) { result = true; break; }
+        for(uint8_t i=0; i<8; i++){
+            if ( deviceID == deviceGroups[sessionDeviceGroup].idList[i] ) { result = true; break; }
         }
         deviceGroupsMutex.unlock();
         return result;
@@ -102,17 +105,17 @@ protected:
     uint8_t getSessionDeviceGroupWaitNum(){
         uint8_t result = 0;
         deviceGroupsMutex.lock();
-        for(uint8_t i=1; i<9; i++){
-            if ( deviceGroups[sessionDeviceGroup][i] != 0 ) { result++; }
+        for(uint8_t i=0; i<8; i++){
+            if ( deviceGroups[sessionDeviceGroup].idList[i] != 0 ) { result++; }
         }
         deviceGroupsMutex.unlock();
         return result;
     }
 
     uint16_t getSessionDeviceGroupTimeout(){
-        uint16_t timeoutVal;
+        int timeoutVal;
         deviceGroupsMutex.lock();
-        timeoutVal = deviceGroups[sessionDeviceGroup][0];
+        timeoutVal = deviceGroups[sessionDeviceGroup].timeoutMS;
         deviceGroupsMutex.unlock();
         return timeoutVal;
     }
