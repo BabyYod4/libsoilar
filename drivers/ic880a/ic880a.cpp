@@ -1,6 +1,14 @@
 #include "ic880a.hpp"
 
-iC880a::iC880a(){ _reset(); }
+iC880a::iC880a(){
+    _reset();
+}
+
+iC880a::iC880a(const LoraGatewayDeviceGroups& deviceGroups){ 
+    _reset();
+    setDeviceGroups(deviceGroups); 
+    setSessionDeviceGroup(0);
+}
 
 void iC880a::init(){ 
 
@@ -97,7 +105,7 @@ void iC880a::init(){
     ch8.sync_word = 0x12;
 /// ==== ! CHANNEL CONFIG (2/2) ====
   
-
+/// ==== APPLYING MODEM SETTINGS ====
     std::cout << "Configuring modem settings.... \r\n";
     
     _lgw_board_setconf( boardconf );
@@ -116,6 +124,8 @@ void iC880a::init(){
     _lgw_rxif_setconf( 7, ch8 );
 
     std::cout << "Succesfully configured modem settings.... \r\n";
+/// ==== ! APPLYING MODEM SETTINGS ====
+
 }
 
 void iC880a::stop(){ 
@@ -133,10 +143,27 @@ bool iC880a::read(){
 
         [this](std::array< LoraPackage, 8 >& buff)->bool{
             int pktLen;
-            bool pktRecv[2] = {false, false};
-            bool end = false;
+            uint8_t buffPointer = 0;
 
-            while ( !end ){
+            uint8_t sessionDevNum = getSessionDeviceGroupWaitNum();
+            uint16_t sessionTimeoutVal = getSessionDeviceGroupTimeout();
+            uint16_t foundDevices[sessionDevNum] = {0};
+
+            uint8_t devId_msb;
+            uint8_t devId_lsb;
+            uint16_t devId;
+    
+            bool allDevFound = false;
+            bool timeout = false;
+            
+            std::function<bool(uint16_t)> isAlreadyfound = [&sessionDevNum, &foundDevices](uint16_t _devID)->bool{ 
+                for (uint8_t i=0; i<sessionDevNum; i++){
+                    if (_devID == foundDevices[i]){ return true; }
+                }
+                return false;
+            };
+
+            while ( !allDevFound ){
                 pktLen = _lgw_receive(8, _rxBuff);
                 
                 if (pktLen > 0){
@@ -144,68 +171,37 @@ bool iC880a::read(){
                     for( int i=0; i<pktLen; i++){
 
                         if( _rxBuff[i].payload[0] == 255 ){
-                            uint8_t devId = _rxBuff[i].payload[1];
-                            
-                            // if (dev1Recv != true){
-                                if ( (devId == 1) && (_rxBuff[i].payload[2] != 0) && ( pktRecv[0] == false ) ){ 
-                                    pktRecv[0] = true;
-                                    // std::cout << +devId << " ";
-                                    buff[ devId ].data[1] = devId;
-                                    buff[ devId ].data[2] = _rxBuff[i].payload[2];
-                                    buff[ devId ].data[3] = _rxBuff[i].payload[3];
-                                    buff[ devId ].data[4] = _rxBuff[i].payload[4];
-                                }
-                            // }
+                            devId_msb = _rxBuff[i].payload[1];
+                            devId_lsb = _rxBuff[i].payload[2];
+                            devId = ((uint16_t)devId_lsb << 8) | devId_msb;
 
-                            // if (dev2Recv != true){
-
-                                if ( (devId == 2) && (_rxBuff[i].payload[2] != 0) && ( pktRecv[1] == false )){ 
-                                    pktRecv[1] = true;
-                                    // std::cout << +devId << " ";
-                                    buff[ devId ].data[1] = devId;
-                                    buff[ devId ].data[2] = _rxBuff[i].payload[2];
-                                    buff[ devId ].data[3] = _rxBuff[i].payload[3];
-                                    buff[ devId ].data[4] = _rxBuff[i].payload[4];
-                                }
-
-                            // }
-                            if ( pktRecv[0] == true ){
-                                if ( pktRecv[1] == true ){ 
-                                    end = true;
-                                }
+                            if ( _rxBuff[i].payload[3] != 0 && isValidDevice(devId) && !isAlreadyfound(devId) ){
+                                buff[buffPointer].devID = devId;
+                                for(uint16_t pcol = 3; pcol < _rxBuff[i].size; pcol++ ){ buff[buffPointer].data[pcol-3] = _rxBuff[i].payload[pcol]; }
+                                foundDevices[buffPointer] = devId;
+                                buffPointer++;
                             }
+
                         }
 
                     }
-
                 }
 
-                delay(50);
+                if ( buffPointer >= sessionDevNum ){ allDevFound = true; }
 
             }
 
-            return end;
+            return allDevFound;
         }
     );
 
-    // std::cout << std::endl;
-    
     _rxBuffMutex.unlock();
     return true;
 }
 
 
 void iC880a::send(){
-    //  claimBuffer(
 
-    //     [](std::array< LoraPackage, 8 >& buff)->bool{
-    //         for (const LoraPackage& pkg: buff){
-    //             for (const auto& e : pkg.data) { std::cout << +e << std::endl;  }
-    //         }
-    //         return true;
-    //     }
-
-    // );
 }
 
 void iC880a::_reset(){ 

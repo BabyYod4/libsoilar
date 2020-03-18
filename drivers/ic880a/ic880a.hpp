@@ -6,7 +6,7 @@
 #include "../lora_gateway.hpp"
 #include "../../libloragw/cpp_hal_adapter.h"
 
-static ChannelData iC880aChannel[] = { 
+const GatewayChannelData iC880aChannel[] = { 
     { 0, 0, 0 }, // just used as index padding so it starts from 1 not 0...
     
     { 1, -187500,   1 }, // IF0 Radio B 
@@ -24,6 +24,7 @@ class iC880a : public LoraGateway{
 
 public:
     iC880a();
+    iC880a(const LoraGatewayDeviceGroups& deviceGroups);
     void init() override;
     void stop() override;
     void start() override;
