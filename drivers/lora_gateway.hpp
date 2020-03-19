@@ -25,10 +25,7 @@ typedef std::vector< LoraGatewayDeviceGroup > LoraGatewayDeviceGroups;
 
 typedef struct GatewayChannelData{ uint8_t channelID; int32_t offsetFreq; uint8_t radioNum; } GatewayChannelData;
 
-typedef struct LoraPackage{
-    uint16_t devID;
-    std::array<uint8_t, 256> data;
-} LoraPackage;
+typedef struct LoraPackage{ uint16_t devID; uint8_t pktNum; uint16_t pktSize; std::array<uint8_t, 256> data; } LoraPackage;
 
 class LoraGateway{
 
@@ -39,19 +36,41 @@ public:
     virtual void start() = 0;
 
     virtual bool read() = 0;
-    virtual void send() = 0;
+    virtual void send(const std::vector< LoraPackage >& msgList) = 0;
 
     virtual void print() { printBuffer(-1, -1, -1, -1); }
     virtual void print(int rowMin, int rowMax){ printBuffer(rowMin, rowMax, -1, -1); }
     virtual void print(int rowMin, int rowMax, int colMin, int colMax) { printBuffer(rowMin, rowMax, colMin, colMax); }
+
+    void setMode( const LoraGatewayModes& newMode ){
+        modeMutex.lock();
+        currentMode = newMode;
+        modeMutex.unlock();
+        if (newMode == LoraGatewayModes::RX_MODE ){ setRXmode(); }
+        if (newMode == LoraGatewayModes::TX_MODE ){ setTXmode(); }
+    }
+    
+    LoraGatewayModes getMode(){
+        LoraGatewayModes tmp;
+        modeMutex.lock();
+        tmp = currentMode;
+        modeMutex.unlock();
+        return tmp;
+    }
 
 protected:
     std::array< LoraPackage, 8 > gatewayBuffer;
     boost::mutex gatewayBufferMutex;
 
     LoraGatewayDeviceGroups deviceGroups;
-    uint16_t sessionDeviceGroup;
+    uint16_t currentDeviceGroup;
     boost::mutex deviceGroupsMutex;
+
+    LoraGatewayModes currentMode;
+    boost::mutex modeMutex;
+
+    virtual void setRXmode(){};
+    virtual void setTxmode(){};
 
     bool claimBuffer( const std::function< bool( std::array< LoraPackage, 8 >& ) > & task){
         bool result = false;
@@ -70,7 +89,7 @@ protected:
 
        if(rowMin >= 0 && rowMax <= 8 && colMin >=0 && colMax <= 255){
             for(int row=rowMin; row<rowMax; row++){
-                std::cout << "Endnode [" << +gatewayBuffer[row].devID << "] ";
+                std::cout << "Endnode [" << +gatewayBuffer[row].devID << "] -- Packet [" << +gatewayBuffer[row].pktNum << "] ";
                 for(int col=colMin; col<colMax; col++){
                      std::cout << +gatewayBuffer[row].data[col] << "-";
                 }
@@ -80,15 +99,15 @@ protected:
         gatewayBufferMutex.unlock();
     }
 
-    void setDeviceGroups(const LoraGatewayDeviceGroups& newDeviceGroups){
+    void addDeviceGroups(const LoraGatewayDeviceGroups& newDeviceGroups){
         deviceGroupsMutex.lock();
         deviceGroups = newDeviceGroups;
         deviceGroupsMutex.unlock();
     }
 
-    void setSessionDeviceGroup( uint16_t newSessionDeviceGroup ){
+    void setDeviceGroup( uint16_t newDeviceGroup ){
         deviceGroupsMutex.lock();
-        sessionDeviceGroup = newSessionDeviceGroup;
+        currentDeviceGroup = newDeviceGroup;
         deviceGroupsMutex.unlock();
     }
 
@@ -102,7 +121,7 @@ protected:
         return result;
     }
 
-    uint8_t getSessionDeviceGroupWaitNum(){
+    uint8_t getWaitlist(){
         uint8_t result = 0;
         deviceGroupsMutex.lock();
         for(uint8_t i=0; i<8; i++){
@@ -112,7 +131,7 @@ protected:
         return result;
     }
 
-    uint16_t getSessionDeviceGroupTimeout(){
+    uint16_t getTimeout(){
         int timeoutVal;
         deviceGroupsMutex.lock();
         timeoutVal = deviceGroups[sessionDeviceGroup].timeoutMS;

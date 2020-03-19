@@ -24,25 +24,29 @@ const GatewayChannelData iC880aChannel[] = {
 class iC880a : public LoraGateway{
 
 public:
-    iC880a();
     iC880a(const LoraGatewayDeviceGroups& deviceGroups);
     void init() override;
     void stop() override;
     void start() override;
 
     bool read() override;
-    void send() override;
+    void send(const std::vector< LoraPackage >& msgList) override;
+
+protected:
+    void setRXmode() override;
+    void setTXmode() override;
 
 private:
-    boost::mutex _rxBuffMutex;
-    boost::mutex _txBuffMutex;
+    boost::mutex rxBuffMutex;
+    boost::mutex txBuffMutex;
 
-    lgw_pkt_rx_s _rxBuff[8];
-    lgw_pkt_tx_s _txBuff[8];
+    lgw_pkt_rx_s rxBuff[8];
+    lgw_pkt_tx_s txBuff[8];
 
-    void _reset();
-
-
+    lgw_conf_board_s boardconf;
+    lgw_conf_rxrf_s radioA; lgw_conf_rxrf_s radioB;
+    lgw_conf_rxif_s ch1; lgw_conf_rxif_s ch2; lgw_conf_rxif_s ch3; lgw_conf_rxif_s ch4;
+    lgw_conf_rxif_s ch5; lgw_conf_rxif_s ch6; lgw_conf_rxif_s ch7; lgw_conf_rxif_s ch8;
 };
 
 #endif //IC880A_HPP
