@@ -36,7 +36,7 @@ public:
     virtual void start() = 0;
 
     virtual bool read() = 0;
-    virtual void send(const std::vector< LoraPackage >& msgList) = 0;
+    virtual void send(const LoraPackage& msg) = 0;
 
     virtual void print() { printBuffer(-1, -1, -1, -1); }
     virtual void print(int rowMin, int rowMax){ printBuffer(rowMin, rowMax, -1, -1); }
@@ -59,6 +59,8 @@ public:
     }
 
 protected:
+    boost::mutex gatewayMutex;
+
     std::array< LoraPackage, 8 > gatewayBuffer;
     boost::mutex gatewayBufferMutex;
 
@@ -70,7 +72,7 @@ protected:
     boost::mutex modeMutex;
 
     virtual void setRXmode(){};
-    virtual void setTxmode(){};
+    virtual void setTXmode(){};
 
     bool claimBuffer( const std::function< bool( std::array< LoraPackage, 8 >& ) > & task){
         bool result = false;
@@ -91,7 +93,7 @@ protected:
             for(int row=rowMin; row<rowMax; row++){
                 std::cout << "Endnode [" << +gatewayBuffer[row].devID << "] -- Packet [" << +gatewayBuffer[row].pktNum << "] ";
                 for(int col=colMin; col<colMax; col++){
-                     std::cout << +gatewayBuffer[row].data[col] << "-";
+                     std::cout << +gatewayBuffer[row].data[col] << " ";
                 }
                 std::cout << std::endl;
             }
@@ -115,7 +117,7 @@ protected:
         bool result = false;
         deviceGroupsMutex.lock();
         for(uint8_t i=0; i<8; i++){
-            if ( deviceID == deviceGroups[sessionDeviceGroup].idList[i] ) { result = true; break; }
+            if ( deviceID == deviceGroups[currentDeviceGroup].idList[i] ) { result = true; break; }
         }
         deviceGroupsMutex.unlock();
         return result;
@@ -125,7 +127,7 @@ protected:
         uint8_t result = 0;
         deviceGroupsMutex.lock();
         for(uint8_t i=0; i<8; i++){
-            if ( deviceGroups[sessionDeviceGroup].idList[i] != 0 ) { result++; }
+            if ( deviceGroups[currentDeviceGroup].idList[i] != 0 ) { result++; }
         }
         deviceGroupsMutex.unlock();
         return result;
@@ -134,7 +136,7 @@ protected:
     uint16_t getTimeout(){
         int timeoutVal;
         deviceGroupsMutex.lock();
-        timeoutVal = deviceGroups[sessionDeviceGroup].timeoutMS;
+        timeoutVal = deviceGroups[currentDeviceGroup].timeoutMS;
         deviceGroupsMutex.unlock();
         return timeoutVal;
     }

@@ -6,109 +6,103 @@ iC880a::iC880a(const LoraGatewayDeviceGroups& deviceGroups){
 }
 
 void iC880a::init(){
+/// ==== GATEWAY RESET ==== 
+    delay(200);
     pinMode( 9, OUTPUT );
     digitalWrite( 9, HIGH);
     delay(5000);
     digitalWrite(9, LOW);
+/// ==== ! GATEWAY RESET ==== 
 
 /// ==== BOARD CONFIG ====    
     boardconf.lorawan_public = false;
     boardconf.clksrc = 1; 
 /// ==== ! BOARD CONFIG ====   
 
-
 /// ==== RADIO CONFIG ====  
     radioA.enable = true;
-    radioA.freq_hz = (uint32_t)((867.0*1e6) + 0.5);
     radioA.rssi_offset = -169;
     radioA.type = LGW_RADIO_TYPE_SX1257;
 
     radioB.enable = true;
-    radioB.freq_hz = (uint32_t)((876.5*1e6) + 0.5);
     radioB.rssi_offset = -169;
     radioB.type = LGW_RADIO_TYPE_SX1257;
 /// ==== ! RADIO CONFIG ====  
 
 
-/// ==== CHANNEL CONFIG (1/2) ====  
-    ch1.enable = true;
-    ch1.rf_chain = iC880aChannel[1].radioNum;
-    ch1.freq_hz = iC880aChannel[1].offsetFreq;
-    ch1.bandwidth = BW_125KHZ;
-    ch1.sync_word_size = 1;
-    ch1.sync_word = 0x12;
+/// ==== RX CHANNEL CONFIG (1/2) ====  
+    chRX1.rf_chain = iC880aChannel[1].radioNum;
+    chRX1.freq_hz = iC880aChannel[1].offsetFreq;
+    chRX1.bandwidth = BW_125KHZ;
+    chRX1.sync_word_size = 1;
+    chRX1.sync_word = 0x12;
 
-    ch2.enable = true;
-    ch2.rf_chain = iC880aChannel[2].radioNum;
-    ch2.freq_hz = iC880aChannel[2].offsetFreq;
-    ch2.bandwidth = BW_125KHZ;
-    ch2.sync_word_size = 1;
-    ch2.sync_word = 0x12;
+    chRX2.rf_chain = iC880aChannel[2].radioNum;
+    chRX2.freq_hz = iC880aChannel[2].offsetFreq;
+    chRX2.bandwidth = BW_125KHZ;
+    chRX2.sync_word_size = 1;
+    chRX2.sync_word = 0x12;
 
-    ch3.enable = true;
-    ch3.rf_chain = iC880aChannel[3].radioNum;
-    ch3.freq_hz = iC880aChannel[3].offsetFreq;
-    ch3.bandwidth = BW_125KHZ;
-    ch3.sync_word_size = 1;
-    ch3.sync_word = 0x12;
+    chRX3.rf_chain = iC880aChannel[3].radioNum;
+    chRX3.freq_hz = iC880aChannel[3].offsetFreq;
+    chRX3.bandwidth = BW_125KHZ;
+    chRX3.sync_word_size = 1;
+    chRX3.sync_word = 0x12;
 
-    ch4.enable = true;
-    ch4.rf_chain = iC880aChannel[4].radioNum;
-    ch4.freq_hz = iC880aChannel[4].offsetFreq;
-    ch4.bandwidth = BW_125KHZ;
-    ch4.sync_word_size = 1;
-    ch4.sync_word = 0x12;
+    chRX4.rf_chain = iC880aChannel[4].radioNum;
+    chRX4.freq_hz = iC880aChannel[4].offsetFreq;
+    chRX4.bandwidth = BW_125KHZ;
+    chRX4.sync_word_size = 1;
+    chRX4.sync_word = 0x12;
 /// ==== ! CHANNEL CONFIG (1/2) ====  
 
 
-/// ==== CHANNEL CONFIG (2/2) ====
-    ch5.enable = true;
-    ch5.rf_chain = iC880aChannel[5].radioNum;
-    ch5.freq_hz = iC880aChannel[5].offsetFreq;
-    ch5.bandwidth = BW_125KHZ;
-    ch5.sync_word_size = 1;
-    ch5.sync_word = 0x12;
+/// ==== RX CHANNEL CONFIG (2/2) ====
+    chRX5.rf_chain = iC880aChannel[5].radioNum;
+    chRX5.freq_hz = iC880aChannel[5].offsetFreq;
+    chRX5.bandwidth = BW_125KHZ;
+    chRX5.sync_word_size = 1;
+    chRX5.sync_word = 0x12;
 
-    ch6.enable = true;
-    ch6.rf_chain = iC880aChannel[6].radioNum;
-    ch6.freq_hz = iC880aChannel[6].offsetFreq;
-    ch6.bandwidth = BW_125KHZ;
-    ch6.sync_word_size = 1;
-    ch6.sync_word = 0x12;
+    chRX6.rf_chain = iC880aChannel[6].radioNum;
+    chRX6.freq_hz = iC880aChannel[6].offsetFreq;
+    chRX6.bandwidth = BW_125KHZ;
+    chRX6.sync_word_size = 1;
+    chRX6.sync_word = 0x12;
 
-    ch7.enable = true;
-    ch7.rf_chain = iC880aChannel[7].radioNum;
-    ch7.freq_hz = iC880aChannel[7].offsetFreq;
-    ch7.bandwidth = BW_125KHZ;
-    ch7.sync_word_size = 1;
-    ch7.sync_word = 0x12;
+    chRX7.rf_chain = iC880aChannel[7].radioNum;
+    chRX7.freq_hz = iC880aChannel[7].offsetFreq;
+    chRX7.bandwidth = BW_125KHZ;
+    chRX7.sync_word_size = 1;
+    chRX7.sync_word = 0x12;
 
-    ch8.enable = true;
-    ch8.rf_chain = iC880aChannel[8].radioNum;
-    ch8.freq_hz = iC880aChannel[8].offsetFreq;
-    ch8.bandwidth = BW_125KHZ;
-    ch8.sync_word_size = 1;
-    ch8.sync_word = 0x12;
-/// ==== ! CHANNEL CONFIG (2/2) ====
+    chRX8.rf_chain = iC880aChannel[8].radioNum;
+    chRX8.freq_hz = iC880aChannel[8].offsetFreq;
+    chRX8.bandwidth = BW_125KHZ;
+    chRX8.sync_word_size = 1;
+    chRX8.sync_word = 0x12;
+/// ==== ! RX CHANNEL CONFIG (2/2) ====
 
-/// ==== TX PKT SETUP ==== 
+/// ==== TX CHANNEL SETUP ==== 
+    chTX.enable = true;
+    chTX.rf_chain = 0;
+    chTX.freq_hz = -125000;
+    chTX.sync_word = 0x12;
+    chTX.sync_word_size = 1;
+    chTX.bandwidth = BW_250KHZ;
+    chTX.datarate = DR_LORA_SF10;
 
-    for(uint8_t i=0; i<2; i++){
-        txBuff[i].tx_mode = IMMEDIATE;
-        txBuff[i].rf_power = 10;
-        txBuff[i].modulation = MOD_LORA;
-        txBuff[i].bandwidth = BW_125KHZ;
-        txBuff[i].datarate = DR_LORA_SF7;
-        txBuff[i].coderate = CR_LORA_4_6;
-        txBuff[i].preamble = 8;
-        txBuff[i].rf_chain = 1; 
-    }
-
-    txBuff[0].freq_hz = radioB.freq_hz + ch1.freq_hz;
-    txBuff[1].freq_hz = radioB.freq_hz + ch2.freq_hz;
-
-
+    txBuff.tx_mode = IMMEDIATE;
+    txBuff.rf_power = 10;
+    txBuff.modulation = MOD_LORA;
+    txBuff.bandwidth = BW_250KHZ;
+    txBuff.datarate = DR_LORA_SF10;
+    txBuff.coderate = CR_LORA_4_6;
+    txBuff.preamble = 8;
+    txBuff.rf_chain = 0; 
+    txBuff.freq_hz = ( (uint32_t)((867.0*1e6) + 0.5) - 125000);
 /// ==== ! TX PKT SETUP ====
+
 }
 
 void iC880a::stop(){ 
@@ -180,7 +174,7 @@ bool iC880a::read(){
                                 buff[buffPointer].devID = devId;
                                 buff[buffPointer].pktNum = pktCount;
                                 buff[buffPointer].pktSize = pktTrueSize;
-                                for(uint16_t pcol = 4; pcol < pktTrueSize; pcol++ ){ buff[buffPointer].data[pcol-4] = rxBuff[i].payload[pcol]; }
+                                for(uint16_t pcol = 4; pcol < pktSize; pcol++ ){ buff[buffPointer].data[pcol-4] = rxBuff[i].payload[pcol]; }
                                 foundDevices[buffPointer] = devId;
                                 buffPointer++;
                             }
@@ -205,28 +199,34 @@ bool iC880a::read(){
     return result;
 }
 
+void iC880a::send(const LoraPackage& msg){
+    gatewayMutex.lock();
+    
+    int j=0;
+    uint8_t status;
+    uint16_t pktSize = 0;
+    uint16_t pktTrueSize = 0;
 
-void iC880a::send(const std::vector< LoraPackage >& msgList){
-    bool result = false;
-    txBuffMutex.lock();
-    result = claimBuffer(
-        [this, &msgList](std::array< LoraPackage, 8 >& buff)->bool{
-            uint8_t i = 0;
-            for(const LoraPackage& msg: msgList){
-                if (msg.pktSize > 250){ msg.pktSize=250; }
-                txBuff[i].size = msg.pktSize + 6;
-                txBuff[i].payload[0] = 0xFF;
-                txBuff[i].payload[1] = msg.devID & 0xFF;
-                txBuff[i].payload[2] = (msg.devID >> 8);
-                txBuff[i].payload[3] = msg.pktNum;
-                for(uint8_t p=0; p<250; p++ ){ txBuff[i].payload[p+4] = msg.data[p]; }
-                txBuff[i].payload[254] =  0xFF;
-                txBuff[i].payload[255] =  0xFF;
-            }
-        }
-    );
-    txBuffMutex.unlock();
-    return result;
+    pktSize = msg.pktSize;
+    pktTrueSize = pktSize + 6;
+    if (pktSize > 250){ pktSize=250; }
+    txBuff.size = pktTrueSize;
+    txBuff.payload[0] = 0xFF;
+    txBuff.payload[1] = msg.devID & 0xFF;
+    txBuff.payload[2] = (msg.devID >> 8);
+    txBuff.payload[3] = msg.pktNum;
+    for(uint8_t p=0; p<pktSize; p++ ){ txBuff.payload[p+4] = msg.data[p]; }
+    txBuff.payload[pktTrueSize -2] =  0xFF;
+    txBuff.payload[pktTrueSize -1] =  0xFF;
+
+    _lgw_send(txBuff);
+    do{
+        ++j;
+        delay(100);
+        _lgw_status(TX_STATUS, &status);
+    } while( (status != TX_FREE) && (j < 100) );
+ 
+    gatewayMutex.unlock();
 }
 
 void iC880a::setRXmode(){
@@ -234,6 +234,13 @@ void iC880a::setRXmode(){
 /// ==== RADIO CONFIG ====  
     radioA.tx_enable = false;
     radioB.tx_enable = false;
+
+    radioA.freq_hz = (uint32_t)((867.0*1e6) + 0.5);
+    radioB.freq_hz = (uint32_t)((876.5*1e6) + 0.5);
+
+    chRX1.enable = true; chRX2.enable = true; chRX3.enable = true; chRX4.enable = true;
+    chRX5.enable = true; chRX6.enable = true; chRX7.enable = true; chRX8.enable = true;
+    // chTX.enable = false;
 /// ==== ! RADIO CONFIG ====  
 
 /// ==== APPLYING MODEM SETTINGS ====
@@ -241,18 +248,20 @@ void iC880a::setRXmode(){
     
     _lgw_board_setconf( boardconf );
 
-    _lgw_rxrf_setconf( 0, radioA); /* radio A, f0 */
+    _lgw_rxrf_setconf( 0, radioA ); 
     _lgw_rxrf_setconf( 1, radioB );
 
-    _lgw_rxif_setconf( 0, ch1 );
-    _lgw_rxif_setconf( 1, ch2 );
-    _lgw_rxif_setconf( 2, ch3 );
-    _lgw_rxif_setconf( 3, ch4 );
+    _lgw_rxif_setconf( 0, chRX1 );
+    _lgw_rxif_setconf( 1, chRX2 );
+    _lgw_rxif_setconf( 2, chRX3 );
+    _lgw_rxif_setconf( 3, chRX4 );
 
-    _lgw_rxif_setconf( 4, ch5 );
-    _lgw_rxif_setconf( 5, ch6 );
-    _lgw_rxif_setconf( 6, ch7 );
-    _lgw_rxif_setconf( 7, ch8 );
+    _lgw_rxif_setconf( 4, chRX5 );
+    _lgw_rxif_setconf( 5, chRX6 );
+    _lgw_rxif_setconf( 6, chRX7 );
+    _lgw_rxif_setconf( 7, chRX8 );
+
+    // _lgw_rxif_setconf( 8, chTX );
 
     std::cout << "Succesfully configured RX modem settings! \r\n";
 /// ==== ! APPLYING MODEM SETTINGS ====
@@ -260,12 +269,19 @@ void iC880a::setRXmode(){
 }
 
 void iC880a::setTXmode(){
+
 /// ==== RADIO CONFIG ====  
     radioA.tx_enable = true;
-    radioB.tx_enable = true;
-
+    radioB.tx_enable = false;
+    
     radioA.tx_notch_freq = 129000U;
-    radioB.tx_notch_freq = 129000U;
+
+    radioA.freq_hz = (uint32_t)((867.0*1e6) + 0.5);
+    radioB.freq_hz = (uint32_t)((868.4*1e6) + 0.5);
+
+    chRX1.enable = false; chRX2.enable = false; chRX3.enable = false; chRX4.enable = false;
+    chRX5.enable = false; chRX6.enable = false; chRX7.enable = false; chRX8.enable = false;
+    
 /// ==== ! RADIO CONFIG ====  
 
 /// ==== APPLYING MODEM SETTINGS ====
@@ -273,19 +289,22 @@ void iC880a::setTXmode(){
     
     _lgw_board_setconf( boardconf );
 
-    _lgw_rxrf_setconf( 0, radioA); /* radio A, f0 */
+    _lgw_rxrf_setconf( 0, radioA );
     _lgw_rxrf_setconf( 1, radioB );
 
-    _lgw_rxif_setconf( 0, ch1 );
-    _lgw_rxif_setconf( 1, ch2 );
-    _lgw_rxif_setconf( 2, ch3 );
-    _lgw_rxif_setconf( 3, ch4 );
+    _lgw_rxif_setconf( 0, chRX1 );
+    _lgw_rxif_setconf( 1, chRX2 );
+    _lgw_rxif_setconf( 2, chRX3 );
+    _lgw_rxif_setconf( 3, chRX4 );
 
-    _lgw_rxif_setconf( 4, ch5 );
-    _lgw_rxif_setconf( 5, ch6 );
-    _lgw_rxif_setconf( 6, ch7 );
-    _lgw_rxif_setconf( 7, ch8 );
+    _lgw_rxif_setconf( 4, chRX5 );
+    _lgw_rxif_setconf( 5, chRX6 );
+    _lgw_rxif_setconf( 6, chRX7 );
+    _lgw_rxif_setconf( 7, chRX8 );
+
+    _lgw_rxif_setconf( 8, chTX );
 
     std::cout << "Succesfully configured TX modem settings! \r\n";
 /// ==== ! APPLYING MODEM SETTINGS ====
+
 }
