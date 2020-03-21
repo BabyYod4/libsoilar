@@ -58,6 +58,22 @@ protected:
 private:
     boost::mutex rxBuffMutex;
     boost::mutex txBuffMutex;
+
+    // lgw_pkt_tx_s txBuff;
+    // lgw_pkt_rx_s rxBuff[8];
+    // lgw_conf_board_s boardconf;
+    // lgw_conf_rxrf_s radioA; 
+    // lgw_conf_rxrf_s radioB;
+
+    // lgw_conf_rxif_s chRX1; 
+    // lgw_conf_rxif_s chRX2; 
+    // lgw_conf_rxif_s chRX3; 
+    // lgw_conf_rxif_s chRX4;
+    // lgw_conf_rxif_s chRX5; 
+    // lgw_conf_rxif_s chRX6; 
+    // lgw_conf_rxif_s chRX7; 
+    // lgw_conf_rxif_s chRX8;
+    // lgw_conf_rxif_s chTX;
 };
 
 #endif //IC880A_HPP

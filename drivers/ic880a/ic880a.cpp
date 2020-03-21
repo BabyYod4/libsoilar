@@ -157,7 +157,7 @@ bool iC880a::read(){
             startTime = boost::chrono::steady_clock::now();
 
             while ( !allDevFound && !timeout ){
-                pktsReceived = _lgw_receive(8, rxBuff);
+                pktsReceived = _lgw_receive(sessionDevNum, rxBuff);
                 
                 if (pktsReceived > 0){
 
@@ -275,6 +275,7 @@ void iC880a::setTXmode(){
     radioB.tx_enable = false;
     
     radioA.tx_notch_freq = 129000U;
+    radioA.tx_notch_freq = 0;
 
     radioA.freq_hz = (uint32_t)((867.0*1e6) + 0.5);
     radioB.freq_hz = (uint32_t)((868.4*1e6) + 0.5);
