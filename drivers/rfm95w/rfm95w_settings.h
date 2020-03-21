@@ -46,6 +46,8 @@
 // 867.1875 MHZ
 #define RFM95W_CHANNEL_868_8                     byte3_t{0xD8, 0xCC, 0x00}
 
+#define RFM95W_CHANNEL_868_TX                    byte3_t{0xD8, 0xB8, 0x00}
+
 #define RFM95W_DYNAMIC_PKT_LENGTH                 0
 
 #define RFM95W_DEFAULT_FREQ                       RFM95W_FREQ_868MHZ
