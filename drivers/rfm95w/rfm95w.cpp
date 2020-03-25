@@ -74,8 +74,18 @@ void setModeRfm95w(LoraEndnodeModes newMode){
       _devModesRfm95w = LORA_RX_MODE;
       break;
     case LORA_RX_LOW_POWER_MODE:
-      _writeRegisterRfm95w( RFM95W_REG_OP_MODE, RFM95W_MODE_LONG_RANGE_MODE | RFM95W_MODE_RX_CONTINUOUS);
-      _devModesRfm95w = LORA_RX_LOW_POWER_MODE;
+      if ( !_Rfm95wSettings->lowPowerReceiveMode ){ throwException("ERROR: lowPowerReceiveMode not set to True, unable to attach interrupt!"); }
+      _writeRegisterRfm95w( RFM95W_REG_DIO_MAPPING_1, 0x00); // DIO mapping 0
+      addInterrupt( _Rfm95wInterface->dio0, _onReceiveCallback, ON_RISE );
+
+      // check if lowPowerReceivedMode is enabled
+      if ( _Rfm95wSettings->lowPowerReceiveMode ){
+        _writeRegisterRfm95w( RFM95W_REG_MODEM_CONFIG_1, _readRegisterRfm95w( RFM95W_REG_MODEM_CONFIG_1) & 0xfe);
+      
+        // set RX Continuous mode a.k.a. RX Low Power Mode 
+        _writeRegisterRfm95w( RFM95W_REG_OP_MODE, RFM95W_MODE_LONG_RANGE_MODE | RFM95W_MODE_RX_CONTINUOUS);
+        _devModesRfm95w = LORA_RX_LOW_POWER_MODE;
+      }
       break;
   }
 }
@@ -119,18 +129,10 @@ bool packetReceivedRfm95w(){
   } else{ return false; }
 }
 
-void setOnReceiveCallbackRfm95w( void (*callback)(void) ){
+void addOnReceiveCallbackRfm95w( void (*callback)(void) ){
   if ( !_Rfm95wSettings->lowPowerReceiveMode ){ throwException("ERROR: lowPowerReceiveMode not set to True, unable to attach interrupt!"); }
-  _writeRegisterRfm95w( RFM95W_REG_DIO_MAPPING_1, 0x00); // DIO mapping 0
-  addInterrupt( _Rfm95wInterface->dio0, callback, ON_RISE );
-
-  // check if lowPowerReceivedMode is enabled
-  if ( _Rfm95wSettings->lowPowerReceiveMode ){
-    _writeRegisterRfm95w( RFM95W_REG_MODEM_CONFIG_1, _readRegisterRfm95w( RFM95W_REG_MODEM_CONFIG_1) & 0xfe);
-  
-    // set RX Continuous mode a.k.a. RX Low Power Mode 
-    setModeRfm95w(  LORA_RX_LOW_POWER_MODE );
-  }
+  _onReceiveCallback = callback;
+  addInterrupt( _Rfm95wInterface->dio0, _onReceiveCallback, ON_RISE );
 }
 
 
@@ -145,7 +147,7 @@ LoraEndnodeCodes CreateRfm95W(LoraEndnode* self, Rfm95wInterface* interface, Lor
   self->getMetaData = &getMetaDataRfm95w;
   self->hop = &hopRfm95w;
   self->packetReceived = &packetReceivedRfm95w;
-  self->setOnReceiveCallback = &setOnReceiveCallbackRfm95w;
+  self->addOnReceiveCallback = &addOnReceiveCallbackRfm95w;
 
   bool error = _initRfm95w();
   if (error) { return LORA_ERROR_WRONG_DEVICE; }

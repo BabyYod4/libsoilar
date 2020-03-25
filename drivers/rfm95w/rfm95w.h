@@ -20,6 +20,7 @@ static Rfm95wInterface* _Rfm95wInterface;
 static LoraEndnodeSettings* _Rfm95wSettings;
 static uint8_t _indexRfm95w = 0;
 static LoraEndnodeModes _devModesRfm95w = LORA_INIT_MODE;
+static void (*_onReceiveCallback)(void);
 
 
 /// LoraEndnode Interface Logic 
@@ -33,7 +34,7 @@ LoraEndnodeMetaData getMetaDataRfm95w();
 void hopRfm95w( LoraEndnodeSettings* newSettings);
 
 bool packetReceivedRfm95w();
-void setOnReceiveCallbackRfm95w( void (*callback)(void) );
+void addOnReceiveCallbackRfm95w( void (*callback)(void) );
 
 
 LoraEndnodeCodes CreateRfm95W(LoraEndnode* self, Rfm95wInterface* interface, LoraEndnodeSettings* settings);

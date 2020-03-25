@@ -59,7 +59,7 @@ struct LoraEndnode {
     void (*hop)(LoraEndnodeSettings*); 
     
     bool (*packetReceived)();
-    void (*setOnReceiveCallback)( void (*callback)(void) );
+    void (*addOnReceiveCallback)( void (*callback)(void) );
 };
 
 #endif //LORA_ENDNODE_H
