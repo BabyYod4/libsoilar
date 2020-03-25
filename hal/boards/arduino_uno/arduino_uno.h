@@ -55,6 +55,7 @@
     void wakeUp();
 
     void addInterrupt( gpio_t pin, void (*callback)(void), int condition );
+    void removeInterrupt ( gpio_t pin );
     void throwException( const char* what );
 
     void serialInit( int baudRate );

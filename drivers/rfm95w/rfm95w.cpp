@@ -55,23 +55,27 @@ LoraEndnodeModes getModeRfm95w(){
 void setModeRfm95w(LoraEndnodeModes newMode){
   switch( newMode ){
     case LORA_INIT_MODE: // This has no real benefit or effect. 
-      _devModesRfm95w = LORA_RX_LOW_POWER_MODE;
+      _devModesRfm95w = LORA_INIT_MODE;
       break;
     case LORA_STDBY_MODE:
       _writeRegisterRfm95w( RFM95W_REG_OP_MODE, RFM95W_MODE_LONG_RANGE_MODE | RFM95W_MODE_STDBY);
       _devModesRfm95w = LORA_STDBY_MODE;
+      removeInterrupt (_Rfm95wInterface->dio0 );
       break;
     case LORA_SLEEP_MODE:
       _writeRegisterRfm95w( RFM95W_REG_OP_MODE, RFM95W_MODE_LONG_RANGE_MODE | RFM95W_MODE_SLEEP);
       _devModesRfm95w = LORA_SLEEP_MODE;
+      removeInterrupt (_Rfm95wInterface->dio0 );
       break;
     case LORA_TX_MODE:
       _writeRegisterRfm95w( RFM95W_REG_OP_MODE, RFM95W_MODE_LONG_RANGE_MODE | RFM95W_MODE_TX);
       _devModesRfm95w = LORA_TX_MODE;
+      removeInterrupt (_Rfm95wInterface->dio0 );
       break;
     case LORA_RX_MODE:
       _writeRegisterRfm95w( RFM95W_REG_OP_MODE, RFM95W_MODE_LONG_RANGE_MODE | RFM95W_MODE_RX_SINGLE);
       _devModesRfm95w = LORA_RX_MODE;
+      removeInterrupt (_Rfm95wInterface->dio0 );
       break;
     case LORA_RX_LOW_POWER_MODE:
       if ( !_Rfm95wSettings->lowPowerReceiveMode ){ throwException("ERROR: lowPowerReceiveMode not set to True, unable to attach interrupt!"); }
@@ -132,7 +136,6 @@ bool packetReceivedRfm95w(){
 void addOnReceiveCallbackRfm95w( void (*callback)(void) ){
   if ( !_Rfm95wSettings->lowPowerReceiveMode ){ throwException("ERROR: lowPowerReceiveMode not set to True, unable to attach interrupt!"); }
   _onReceiveCallback = callback;
-  addInterrupt( _Rfm95wInterface->dio0, _onReceiveCallback, ON_RISE );
 }
 
 

@@ -4,7 +4,6 @@
 #if LIB_TYPE == LIB_C
 
 /// Lora Device Interface Logic 
-
 LoraEndnodeCodes readPacketRfm95w(uint8_t* output, uint8_t size ){
   if ( _Rfm95wSettings->lowPowerReceiveMode ){
     _waitTillCallbackReadyRfm95w();
@@ -54,27 +53,41 @@ LoraEndnodeModes getModeRfm95w(){
 void setModeRfm95w(LoraEndnodeModes newMode){
   switch( newMode ){
     case LORA_INIT_MODE: // This has no real benefit or effect. 
-      _devModesRfm95w = LORA_RX_LOW_POWER_MODE;
+      _devModesRfm95w = LORA_INIT_MODE;
       break;
     case LORA_STDBY_MODE:
       _writeRegisterRfm95w( RFM95W_REG_OP_MODE, RFM95W_MODE_LONG_RANGE_MODE | RFM95W_MODE_STDBY);
       _devModesRfm95w = LORA_STDBY_MODE;
+      removeInterrupt (_Rfm95wInterface->dio0 );
       break;
     case LORA_SLEEP_MODE:
       _writeRegisterRfm95w( RFM95W_REG_OP_MODE, RFM95W_MODE_LONG_RANGE_MODE | RFM95W_MODE_SLEEP);
       _devModesRfm95w = LORA_SLEEP_MODE;
+      removeInterrupt (_Rfm95wInterface->dio0 );
       break;
     case LORA_TX_MODE:
       _writeRegisterRfm95w( RFM95W_REG_OP_MODE, RFM95W_MODE_LONG_RANGE_MODE | RFM95W_MODE_TX);
       _devModesRfm95w = LORA_TX_MODE;
+      removeInterrupt (_Rfm95wInterface->dio0 );
       break;
     case LORA_RX_MODE:
       _writeRegisterRfm95w( RFM95W_REG_OP_MODE, RFM95W_MODE_LONG_RANGE_MODE | RFM95W_MODE_RX_SINGLE);
       _devModesRfm95w = LORA_RX_MODE;
+      removeInterrupt (_Rfm95wInterface->dio0 );
       break;
     case LORA_RX_LOW_POWER_MODE:
-      _writeRegisterRfm95w( RFM95W_REG_OP_MODE, RFM95W_MODE_LONG_RANGE_MODE | RFM95W_MODE_RX_CONTINUOUS);
-      _devModesRfm95w = LORA_RX_LOW_POWER_MODE;
+      if ( !_Rfm95wSettings->lowPowerReceiveMode ){ throwException("ERROR: lowPowerReceiveMode not set to True, unable to attach interrupt!"); }
+      _writeRegisterRfm95w( RFM95W_REG_DIO_MAPPING_1, 0x00); // DIO mapping 0
+      addInterrupt( _Rfm95wInterface->dio0, _onReceiveCallback, ON_RISE );
+
+      // check if lowPowerReceivedMode is enabled
+      if ( _Rfm95wSettings->lowPowerReceiveMode ){
+        _writeRegisterRfm95w( RFM95W_REG_MODEM_CONFIG_1, _readRegisterRfm95w( RFM95W_REG_MODEM_CONFIG_1) & 0xfe);
+      
+        // set RX Continuous mode a.k.a. RX Low Power Mode 
+        _writeRegisterRfm95w( RFM95W_REG_OP_MODE, RFM95W_MODE_LONG_RANGE_MODE | RFM95W_MODE_RX_CONTINUOUS);
+        _devModesRfm95w = LORA_RX_LOW_POWER_MODE;
+      }
       break;
   }
 }
@@ -118,22 +131,13 @@ bool packetReceivedRfm95w(){
   } else{ return false; }
 }
 
-void setOnReceiveCallbackRfm95w( void (*callback)(void) ){
+void addOnReceiveCallbackRfm95w( void (*callback)(void) ){
   if ( !_Rfm95wSettings->lowPowerReceiveMode ){ throwException("ERROR: lowPowerReceiveMode not set to True, unable to attach interrupt!"); }
-  _writeRegisterRfm95w( RFM95W_REG_DIO_MAPPING_1, 0x00); // DIO mapping 0
-  addInterrupt( _Rfm95wInterface.dio0, callback, ON_RISE );
-
-  // check if lowPowerReceivedMode is enabled
-  if ( _Rfm95wSettings->lowPowerReceiveMode ){
-    _writeRegisterRfm95w( RFM95W_REG_MODEM_CONFIG_1, _readRegisterRfm95w( RFM95W_REG_MODEM_CONFIG_1) & 0xfe);
-  
-    // set RX Continuous mode a.k.a. RX Low Power Mode 
-    setModeRfm95w(  LORA_RX_LOW_POWER_MODE );
-  }
+  _onReceiveCallback = callback;
 }
 
 
-LoraEvent CreateRfm95W(LoraEndnode* self, Rfm95wInterface interface, EndnodeSettings settings ){
+LoraEndnodeCodes CreateRfm95W(LoraEndnode* self, Rfm95wInterface* interface, LoraEndnodeSettings* settings ){
   _Rfm95wSettings = settings;
   _Rfm95wInterface = interface;
 
@@ -144,7 +148,7 @@ LoraEvent CreateRfm95W(LoraEndnode* self, Rfm95wInterface interface, EndnodeSett
   self->getMetaData = &getMetaDataRfm95w;
   self->hop = &hopRfm95w;
   self->packetReceived = &packetReceivedRfm95w;
-  self->setOnReceiveCallback = &setOnReceiveCallbackRfm95w;
+  self->addOnReceiveCallback = &addOnReceiveCallbackRfm95w;
 
   bool error = _initRfm95w();
   if (error) { return LORA_ERROR_WRONG_DEVICE; }
@@ -155,22 +159,22 @@ LoraEvent CreateRfm95W(LoraEndnode* self, Rfm95wInterface interface, EndnodeSett
 /// Module Specific Logic
 bool _initRfm95w(){
   // setup pins
-  gpioInit( _Rfm95wInterface.nss, GPIO_OUT );
-  gpioInit(_Rfm95wInterface.reset, GPIO_OUT );
+  gpioInit( _Rfm95wInterface->nss, GPIO_OUT );
+  gpioInit(_Rfm95wInterface->reset, GPIO_OUT );
 
   // set NSS high
-  gpioSet(_Rfm95wInterface.nss, HIGH);
+  gpioSet(_Rfm95wInterface->nss, HIGH);
 
   // Manual reset (see manual 7.2)
-  if (_Rfm95wInterface.reset != -1 ) {
+  if (_Rfm95wInterface->reset != -1 ) {
     // Wait for POR (See manual 7.2.1)
-    gpioSet(_Rfm95wInterface.reset, LOW);
+    gpioSet(_Rfm95wInterface->reset, LOW);
     sleepMs(10);
-    gpioSet(_Rfm95wInterface.reset, HIGH);
-    gpioInit(_Rfm95wInterface.reset, GPIO_IN );
+    gpioSet(_Rfm95wInterface->reset, HIGH);
+    gpioInit(_Rfm95wInterface->reset, GPIO_IN );
 
     // start spi interface
-    spiInit( _Rfm95wInterface.spiDev );
+    spiInit( _Rfm95wInterface->spiDev );
   }
 
 
@@ -279,14 +283,14 @@ void _writeRegisterRfm95w(uint8_t address, uint8_t value){
 uint8_t _singleTransferRfm95w(uint8_t address, uint8_t value){
   uint8_t response;
 
-  gpioSet(_Rfm95wInterface.nss, LOW);
+  gpioSet(_Rfm95wInterface->nss, LOW);
 
-  spiAquire( _Rfm95wInterface.spiDev, SPI_CLK_8MHZ, SPI_MODE_0, SPI_ORDER_MSB );
-  spiTransfer(_Rfm95wInterface.spiDev, address);
-  response = spiTransfer(_Rfm95wInterface.spiDev, value);
-  spiRelease( _Rfm95wInterface.spiDev );
+  spiAquire( _Rfm95wInterface->spiDev, SPI_CLK_8MHZ, SPI_MODE_0, SPI_ORDER_MSB );
+  spiTransfer(_Rfm95wInterface->spiDev, address);
+  response = spiTransfer(_Rfm95wInterface->spiDev, value);
+  spiRelease( _Rfm95wInterface->spiDev );
 
-  gpioSet(_Rfm95wInterface.nss, HIGH);
+  gpioSet(_Rfm95wInterface->nss, HIGH);
 
   return response;
 }
@@ -411,6 +415,5 @@ void _stopTransmissionRfm95w(){
   // clear IRQ's
   _writeRegisterRfm95w( RFM95W_REG_IRQ_FLAGS, RFM95W_IRQ_TX_DONE_MASK);
 }
-
 
 #endif //LIB_TYPE_C

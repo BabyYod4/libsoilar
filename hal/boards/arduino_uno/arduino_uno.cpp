@@ -37,6 +37,10 @@
         attachInterrupt(digitalPinToInterrupt(pin), callback, condition);
     }
 
+    void removeInterrupt ( gpio_t pin ){
+        detachInterrupt( digitalPinToInterrupt(pin) );
+    }
+
     void throwException( const char* what ){
         fprintf(stderr, what);
         exit(EXIT_FAILURE);
