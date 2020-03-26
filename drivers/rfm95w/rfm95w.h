@@ -15,14 +15,6 @@ struct Rfm95wInterface {
     gpio_t dio0;
 };
 
-/// Private Variables
-static Rfm95wInterface* _Rfm95wInterface;
-static LoraEndnodeSettings* _Rfm95wSettings;
-static uint8_t _indexRfm95w = 0;
-static LoraEndnodeModes _devModesRfm95w = LORA_INIT_MODE;
-static void (*_onReceiveCallback)(void);
-
-
 /// LoraEndnode Interface Logic 
 LoraEndnodeCodes readPacketRfm95w(uint8_t* output, uint8_t size);
 LoraEndnodeCodes sendPacketRfm95w(uint8_t* input, uint8_t size);
@@ -36,8 +28,7 @@ void hopRfm95w( LoraEndnodeSettings* newSettings);
 bool packetReceivedRfm95w();
 void addOnReceiveCallbackRfm95w( void (*callback)(void) );
 
-
-LoraEndnodeCodes CreateRfm95W(LoraEndnode* self, Rfm95wInterface* interface, LoraEndnodeSettings* settings);
+LoraEndnodeCodes CreateRfm95W(LoraEndnode* self, Rfm95wInterface* interface, LoraEndnodeSettings* settings, uint8_t instanceNum);
 
 
 /// Module Specific Logic
